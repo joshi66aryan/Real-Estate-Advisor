@@ -1,0 +1,516 @@
+# Task templates consumed by CrewAI.
+# Variables in braces (e.g., {purchase_price}) are interpolated from kickoff inputs.
+# `context` chains prior task outputs into downstream tasks.
+data_integration_task:
+  description: >
+    Gather and consolidate comprehensive investment data for the property at {property_address}.
+    You must use the available web search tool to collect current external data and URLs.
+    Do not rely only on model memory.
+    
+    **Property Specifications:**
+    - Address: {property_address}
+    - Purchase Price: ${purchase_price}
+    - Square Footage: {square_footage} sqft
+    - Bedrooms: {bedrooms}
+    - Bathrooms: {bathrooms}
+    - Property Type: {property_type}
+    - Year Built: {year_built}
+    
+    **Your Research Tasks:**
+    
+    1. **Comparable Properties Analysis**
+       - Find 3-5 comparable properties within 1 mile that sold in the last 6 months
+       - Document their sale prices, square footage, and price per sqft
+       - Calculate average price per sqft for the area
+       - Identify any pricing trends (increasing/decreasing)
+    
+    2. **Current Interest Rate Environment**
+       - Research current mortgage rates for investment properties
+       - Note any rate trends or forecasted changes
+       - Identify typical loan terms available
+    
+    3. **Neighborhood Growth Indicators**
+       - Population growth rate (last 5 years)
+       - Median household income trends
+       - Employment growth and major employers
+       - New development projects or infrastructure improvements
+       - School district ratings and trends
+    
+    4. **Rental Market Data**
+       - Average rent for comparable properties in the area
+       - Vacancy rates for the neighborhood
+       - Rent growth trends (YoY)
+       - Average days on market for rentals
+    
+    5. **Local Market Conditions**
+       - Current inventory levels
+       - Months of housing supply
+       - Average days on market for sales
+       - Market temperature (seller's/buyer's/balanced)
+    
+    Compile all findings into a structured data report with sources and dates.
+    Include at least 3 external URLs from reputable sites in your output.
+  
+  expected_output: >
+    A comprehensive data integration report containing:
+    
+    **PROPERTY OVERVIEW**
+    - Complete property specifications
+    - Location analysis
+    
+    **COMPARABLE PROPERTIES** (3-5 examples)
+    - Address, sale price, sqft, price/sqft, sale date
+    - Average area price per sqft: $XXX
+    - Property pricing vs. market average
+    
+    **INTEREST RATE ENVIRONMENT**
+    - Current investment property rates: X.XX%
+    - Rate trend: [rising/falling/stable]
+    - Typical loan terms available
+    
+    **NEIGHBORHOOD ANALYSIS**
+    - Population: XXX,XXX (growth: +/-X.X% over 5 years)
+    - Median household income: $XX,XXX (trend: up/down/stable)
+    - Major employers: [list]
+    - School district rating: X/10
+    - Planned developments: [list]
+    
+    **RENTAL MARKET DATA**
+    - Estimated market rent: $X,XXX/month
+    - Area vacancy rate: X.X%
+    - Rent growth YoY: +/-X.X%
+    - Average days to lease: XX days
+    
+    **MARKET CONDITIONS**
+    - Inventory: X months of supply
+    - Average DOM: XX days
+    - Market status: [seller's/buyer's/balanced]
+    
+    All data must include sources and collection dates.
+  
+  agent: data_integration_specialist
+
+financial_modeling_task:
+  description: >
+    Calculate key investment metrics for the property using validated financial formulas.
+    Use the Financial Calculator tool to ensure accuracy.
+    Keep explanations concise and prioritize only decision-critical metrics.
+    
+    **Property Financials:**
+    - Purchase Price: ${purchase_price}
+    - Estimated Market Rent: ${estimated_monthly_rent}/month
+    - Annual Operating Expenses: ${annual_operating_expenses}
+      (includes: property tax, insurance, maintenance, vacancy reserve, property management)
+    - Down Payment: {down_payment_percent}%
+    - Interest Rate: {interest_rate}%
+    - Loan Term: {loan_term_years} years
+    
+    **Required Calculations:**
+    
+    1. **Cap Rate (Capitalization Rate)**
+       Formula: (Annual Rent - Operating Expenses) / Purchase Price × 100
+       - Calculate Net Operating Income (NOI)
+       - Calculate Cap Rate percentage
+       - Compare to market average from data integration report
+    
+    2. **Cash-on-Cash Return**
+       Formula: Annual Pre-Tax Cash Flow / Total Cash Invested × 100
+       - Calculate annual debt service (mortgage payments)
+       - Calculate annual cash flow (NOI - debt service)
+       - Calculate total cash invested (down payment + closing costs)
+       - Calculate CoC return percentage
+    
+    3. **Internal Rate of Return (IRR)**
+       - Project 5-year hold period
+       - Use 3% annual appreciation (adjust based on market data)
+       - Include annual cash flows
+       - Include equity from loan paydown
+       - Include proceeds from sale (minus selling costs)
+       - Calculate IRR percentage
+    
+    4. **Additional Key Metrics**
+       - Monthly cash flow (after all expenses)
+       - Break-even occupancy rate
+       - Debt Service Coverage Ratio (DSCR)
+       - Total ROI projections (1, 3, 5 years)
+    
+    5. **Sensitivity Analysis**
+       Test these scenarios:
+       - 10% decrease in rent
+       - 15% increase in expenses
+       - 10% vacancy rate impact
+    
+    **Reasoning Summary:**
+    Explain your calculation process step-by-step and what each metric reveals
+    about the investment opportunity.
+    
+    **Sources Requirement:**
+    End with a `## Sources` section.
+    If you reference external market figures from context, include their source URLs and access dates.
+  
+  expected_output: >
+    A concise financial analysis report:
+    
+    **EXECUTIVE SUMMARY**
+    - Cap Rate: X.XX% (Market avg: Y.YY%)
+    - Cash-on-Cash Return: X.XX%
+    - Projected IRR (5-year): X.XX%
+    - Monthly Cash Flow: $X,XXX
+    
+    **DETAILED CALCULATIONS**
+    
+    *Net Operating Income (NOI):*
+    - Annual Gross Rent: $XX,XXX
+    - Less Operating Expenses: ($XX,XXX)
+    - Net Operating Income: $XX,XXX
+    
+    *Cap Rate Analysis:*
+    - Calculation: $XX,XXX / $XXX,XXX × 100 = X.XX%
+    - Market Comparison: [above/below/at] market average by X.XX%
+    - Interpretation: [What this means for the investor]
+    
+    *Cash-on-Cash Return:*
+    - Annual Debt Service: $XX,XXX
+    - Annual Cash Flow: $X,XXX
+    - Total Cash Invested: $XX,XXX
+    - CoC Return: X.XX%
+    - Interpretation: [What this means for cash flow]
+    
+    *IRR Projection (5 years):*
+    - Total cash flows (5 years): $XX,XXX
+    - Equity from appreciation: $XX,XXX
+    - Equity from loan paydown: $XX,XXX
+    - Net proceeds at sale: $XXX,XXX
+    - IRR: X.XX%
+    - Interpretation: [What this means for total returns]
+    
+    *Additional Metrics:*
+    - Monthly Cash Flow: $X,XXX
+    - Break-even Occupancy: XX%
+    - DSCR: X.XX
+    
+    **SENSITIVITY ANALYSIS**
+    - 10% rent decrease: Cash flow = $X,XXX/mo
+    - 15% expense increase: Cash flow = $X,XXX/mo
+    - 10% vacancy: Cash flow = $X,XXX/mo
+    
+    **REASONING SUMMARY**
+    [Step-by-step explanation of what these numbers mean and how they inform
+    the investment decision, walking through the logical reasoning process]
+    
+    ## Sources
+    - [Source name] - [URL] (Accessed: YYYY-MM-DD)
+    - If no external sources were referenced in this task: "No external sources were used for this report."
+  
+  agent: financial_modeling_analyst
+
+strategy_alignment_task:
+  description: >
+    Evaluate this property against the investor's **{investment_strategy}** strategy
+    and determine alignment fit while performing a concise risk screen.
+    
+    **Investment Strategy: {investment_strategy}**
+    
+    **Strategy Definitions and Criteria:**
+    
+    **AGGRESSIVE GROWTH Strategy:**
+    - Primary Goal: Maximum capital appreciation
+    - Target Returns: IRR >12%, annual appreciation >8%
+    - Cash Flow: Can accept lower/negative initial cash flow
+    - Risk Tolerance: Higher risk acceptable for growth potential
+    - Time Horizon: 3-7 years
+    - Ideal Indicators:
+      * Emerging/gentrifying neighborhoods
+      * Population growth >2% annually
+      * Major development projects
+      * Improving school ratings
+      * Tech/innovation hub expansion
+      * Below-market pricing with appreciation runway
+    - Key Metrics: IRR, appreciation potential, future value
+    - Deal Breakers: Declining markets, peak pricing, no growth catalysts
+    
+    **PASSIVE INCOME Strategy:**
+    - Primary Goal: Stable monthly cash flow
+    - Target Returns: Cash-on-Cash >8%, Cap Rate >6%
+    - Cash Flow: Must generate positive cash flow from day one
+    - Risk Tolerance: Lower risk, stability preferred
+    - Time Horizon: Long-term hold (10+ years)
+    - Ideal Indicators:
+      * Established neighborhoods
+      * Stable demographics
+      * Low vacancy rates (<5%)
+      * Predictable expenses
+      * Diversified economy
+      * Strong rental demand
+    - Key Metrics: Cash-on-Cash, Cap Rate, monthly cash flow
+    - Deal Breakers: Negative cash flow, high vacancy, volatile markets
+    
+    **FIX & FLIP Strategy:**
+    - Primary Goal: Quick profit on resale (6-12 months)
+    - Target Returns: 20%+ profit margin after all costs
+    - Cash Flow: N/A (short-term hold)
+    - Risk Tolerance: Moderate (renovation and timing risks)
+    - Time Horizon: 6-12 months
+    - Ideal Indicators:
+      * Distressed properties
+      * Cosmetic issues only
+      * Purchase 20%+ below ARV
+      * Strong resale market (DOM <30 days)
+      * Gentrifying area
+      * Clear value-add opportunity
+    - Key Metrics: ARV, renovation costs, profit margin, time to sale
+    - Deal Breakers: At/above market price, structural issues, slow markets
+    
+    **Your Analysis:**
+    
+    1. **Alignment Score (1-10)**
+       Rate how well this property fits {investment_strategy}
+    
+    2. **Alignment Strengths (3-5 points)**
+       What makes this property suitable for this strategy?
+    
+    3. **Alignment Weaknesses (3-5 points)**
+       What doesn't fit the strategy well?
+    
+    4. **Alternative Strategy Consideration**
+       If score <6, suggest better-fitting strategy
+    
+    5. **Recommendation**
+       - STRONG BUY: Excellent fit, proceed confidently
+       - BUY WITH NEGOTIATION: Good fit if terms improve
+       - CAUTIOUS CONSIDER: Marginal fit, high due diligence needed
+       - PASS: Poor fit, look for better opportunities
+
+    6. **Risk Screen (Merge of prior risk task)**
+       Identify top 3 material risks from market, property, and financial factors.
+       For each risk include:
+       - Severity: LOW / MODERATE / HIGH / CRITICAL
+       - Why it matters
+       - One mitigation action
+    
+    **Reasoning Summary:**
+    Explain your reasoning for the alignment assessment step-by-step.
+    
+    **Sources Requirement:**
+    End with a `## Sources` section and cite external URLs used for market or neighborhood claims.
+  
+  expected_output: >
+    A concise strategy alignment analysis:
+    
+    **INVESTMENT STRATEGY: {investment_strategy}**
+    **ALIGNMENT SCORE: X/10**
+    
+    **SCORE INTERPRETATION**
+    [Explain what this score means and overall fit assessment]
+    
+    **ALIGNMENT STRENGTHS**
+    1. [Strength]: [Why this aligns with {investment_strategy}]
+       Supporting data: [Specific metrics or factors]
+    2. [Continue for 3-5 strengths]
+    
+    **ALIGNMENT WEAKNESSES**
+    1. [Weakness]: [Why this doesn't align with {investment_strategy}]
+       Supporting data: [Specific metrics or factors]
+       Impact: [How significant is this misalignment?]
+    2. [Continue for 3-5 weaknesses]
+    
+    **STRATEGY-SPECIFIC ANALYSIS**
+    
+    For {investment_strategy}, the critical factors are:
+    - [Factor 1]: [How this property performs]
+    - [Factor 2]: [How this property performs]
+    - [Factor 3]: [How this property performs]
+    
+    **ALTERNATIVE STRATEGY CONSIDERATION**
+    [If alignment score <6]:
+    This property may be better suited for [ALTERNATIVE STRATEGY] because:
+    - [Reason 1 with data]
+    - [Reason 2 with data]
+    
+    [If alignment score >=6]:
+    This property is well-suited for {investment_strategy} and would not
+    benefit from a strategy change.
+    
+    **REASONING SUMMARY**
+    Let me walk through my reasoning:
+    
+    Step 1: [Initial assessment of key strategy requirements]
+    Step 2: [How property metrics align with those requirements]
+    Step 3: [Consideration of risks vs. strategy risk tolerance]
+    Step 4: [Evaluation of timeline fit]
+    Step 5: [Final alignment determination]
+    
+    This logical progression leads me to conclude that...
+    
+    **FINAL RECOMMENDATION: [STRONG BUY / BUY WITH NEGOTIATION / CAUTIOUS CONSIDER / PASS]**
+    
+    **Reasoning:**
+    [2-3 sentences explaining recommendation based on alignment analysis]
+    
+    **Action Items if Proceeding:**
+    - [Specific next step]
+    - [What to negotiate]
+    - [Additional due diligence needed]
+
+    **TOP 3 RISKS TO MONITOR**
+    1. [Risk and severity]
+    2. [Risk and severity]
+    3. [Risk and severity]
+    
+    ## Sources
+    - [Source name] - [URL] (Accessed: YYYY-MM-DD)
+    - If no external sources were referenced in this task: "No external sources were used for this report."
+  
+  agent: strategy_alignment_advisor
+  context:
+    - data_integration_task
+    - financial_modeling_task
+
+investment_advisory_task:
+  description: >
+    Synthesize all analysis into a clear, conversational investment recommendation
+    using a concise reasoning summary.
+    
+    **Available Information:**
+    - Property and market data (from data integration)
+    - Financial metrics and projections (from financial modeling)
+    - Strategy alignment plus risk screen (from strategy alignment)
+    
+    **Your Advisory Task:**
+    
+    Create a client-ready investment advisory that delivers actionable guidance
+    in a conversational, non-technical manner. Use concise reasoning
+    to walk the investor through your logical decision-making process.
+    
+    **Structure:**
+    
+    1. **Clear Verdict (Opening)**
+       Start with: STRONG BUY / BUY WITH CAUTION / HOLD FOR NEGOTIATION / PASS
+       Give the headline reason in one sentence
+    
+    2. **Reasoning Summary (Main Body)**
+       Walk through your thinking process:
+       - What did I look at first?
+       - What stood out as important?
+       - How did I weigh the pros vs. cons?
+       - What assumptions am I making?
+       - How does this fit the investor's strategy?
+       - What's the most likely outcome?
+       
+       Explain the investment story in plain English, avoiding jargon.
+       When you must use financial terms, immediately explain them.
+    
+    3. **Key Considerations (Supporting Points)**
+       Highlight 2-3 most important factors (positive and negative)
+       Explain them conversationally
+    
+    4. **The Numbers That Matter (Financial Summary)**
+       Present ONLY the critical numbers with context:
+       - "This property generates about $X,XXX per month in cash flow after
+         all expenses, which means..."
+       - NOT: "Cap Rate: 7.2%, CoC: 9.1%, IRR: 11.3%"
+    
+    5. **Risk Reality Check**
+       Address the 1-2 most important risks honestly
+       Explain what they mean in practical terms
+    
+    6. **Next Steps (Action Items)**
+       Provide 3-4 specific, actionable next steps
+
+    7. **Sources (Required at End)**
+       End the report with a `## Sources` section.
+       List every external source used as bullet points with:
+       - Source name
+       - URL
+       - Access date (YYYY-MM-DD)
+       - Include at least 2 real external URLs from the research outputs.
+       - Do not use "No external sources were used for this report." when web search is enabled.
+       If no external sources were used, include:
+       - "No external sources were used for this report."
+    
+    **Tone Requirements:**
+    - Conversational, like advising a friend
+    - Honest and direct, not salesy
+    - Use "you" and "your"
+    - Short sentences and paragraphs
+    - NO excessive jargon
+    - NO bullet points in main narrative (use in Next Steps only)
+    - Length: 220-350 words
+    
+    **Critical:**
+    - NO "guaranteed" profit claims (safety guardrail)
+    - NO absolute certainty about future outcomes
+    - Acknowledge uncertainty where appropriate
+    - Be realistic about risks
+  
+  expected_output: >
+    A conversational investment advisory (220-350 words) with concise reasoning:
+    
+    ---
+    
+    **INVESTMENT RECOMMENDATION: [STRONG BUY / BUY WITH CAUTION / HOLD FOR NEGOTIATION / PASS]**
+    
+    [Opening sentence with clear verdict and headline reason]
+    
+    **My Thinking Process:**
+    
+    [Main narrative using concise reasoning - explain your logical
+    process step-by-step in conversational language. Walk the investor through
+    how you arrived at this recommendation. Example:]
+    
+    "When I first looked at this property, the thing that caught my attention
+    was [key factor]. The numbers show that you'd be generating about $X,XXX
+    in monthly cash flow after covering your mortgage, taxes, insurance, and
+    maintenance reserves. That's roughly an X% return on the cash you'd put in,
+    which is [strong/moderate/weak] for this market.
+    
+    Here's how I weighed everything: On the positive side, [factor 1] and
+    [factor 2] suggest this could be a solid opportunity for your {investment_strategy}
+    strategy. The neighborhood is showing [trend], and comparable properties
+    are [comparison]. That tells me there's [opportunity/risk] here.
+    
+    But I also had to consider [key concern]. The [specific risk] means you
+    need to be prepared for [potential scenario]. I'm not saying it's a deal-
+    breaker, but it's something you should factor into your decision."
+    
+    **What Matters Most:**
+    
+    [2-3 key points in conversational prose - no bullets here]
+    
+    **The Financial Reality:**
+    
+    [Explain the critical numbers in plain English with context]
+    
+    **What Could Go Wrong:**
+    
+    [Honest discussion of 1-2 key risks in practical terms]
+    
+    **My Recommendation:**
+    
+    [Final advice paragraph with reasoning]
+    
+    **What To Do Next:**
+    
+    If you want to move forward, here's what I'd suggest:
+    - [Specific action item 1]
+    - [Specific action item 2]
+    - [Specific action item 3]
+    - [Specific action item 4]
+
+    ## Sources
+    - [Source name] - [URL] (Accessed: YYYY-MM-DD)
+    - [Source name] - [URL] (Accessed: YYYY-MM-DD)
+    - If no external sources were used: "No external sources were used for this report."
+    
+    ---
+    
+    *Note: This analysis is based on current market conditions and available data.
+    Real estate investments involve risk, and past performance doesn't guarantee
+    future results. Please conduct your own due diligence and consult with
+    qualified professionals before making investment decisions.*
+  
+  agent: investment_advisor
+  context:
+    - data_integration_task
+    - financial_modeling_task
+    - strategy_alignment_task

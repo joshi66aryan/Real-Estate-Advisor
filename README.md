@@ -1,61 +1,246 @@
-# Real-Estate-Advisor
-AI-powered real estate investment agent that analyzes property-level data and market trends to deliver personalized, data-backed insights. It evaluates deals and provides clear buy, hold, or pass recommendations to help investors make smarter, faster, and more confident decisions.
+# Real Estate Advisor
 
+AI-powered real estate investment analysis system built with CrewAI. It combines deterministic financial calculations, multi-agent reasoning, safety guardrails, a CLI entrypoint, and a Streamlit UI.
 
+## What This Project Does
 
+- Analyzes a property using financial metrics (cap rate, cash flow, cash-on-cash, DSCR, break-even occupancy, 5-year projection).
+- Runs a multi-agent workflow (data integration, financial modeling, risk analysis, strategy alignment, final recommendation).
+- Applies guardrails to block unsafe or non-compliant advisory language.
+- Supports a fast deterministic mode for strict low-latency responses (<= 5s target).
 
+## Repository Structure
 
-# RealEstateAdvisor Crew
+- `src/`: application code.
+- `src/crews/`: CrewAI agent/task orchestration and guardrails wiring.
+- `src/tools/`: custom deterministic tools (financial calculator).
+- `src/ui/`: Streamlit UI and orchestrator layer.
+- `src/tests/`: test suite.
+- `src/knowledge/`: local knowledge artifacts.
 
-Welcome to the RealEstateAdvisor Crew project, powered by [crewAI](https://crewai.com). This template is designed to help you set up a multi-agent AI system with ease, leveraging the powerful and flexible framework provided by crewAI. Our goal is to enable your agents to collaborate effectively on complex tasks, maximizing their collective intelligence and capabilities.
+## Architecture Overview
 
-## Installation
+The system uses a layered architecture with deterministic finance logic plus optional multi-agent reasoning:
 
-Ensure you have Python >=3.10 <3.14 installed on your system. This project uses [UV](https://docs.astral.sh/uv/) for dependency management and package handling, offering a seamless setup and execution experience.
+1. Entry Layer
+- CLI: `src/main.py`
+- UI: `src/ui/streamlit.py` -> `src/ui/orchestrator.py`
 
-First, if you haven't already, install uv:
+2. Orchestration Layer
+- `src/ui/orchestrator.py` coordinates:
+  - flow-state tracking (`src/flow_manager.py`)
+  - preliminary deterministic metrics from the financial calculator
+  - full CrewAI execution when applicable
 
+3. Crew Layer
+- `src/crews/crew.py` wires:
+  - 5 agents (data, financial, risk, strategy, advisor)
+  - 5 sequential tasks
+  - per-task guardrails
+  - runtime controls (memory/tools/max iterations/token caps)
+
+4. Prompt/Config Layer
+- `src/crews/config/agents.yaml`: agent personas and role goals
+- `src/crews/config/tasks.yaml`: task instructions, expected outputs, context chaining, source-citation format
+
+5. Deterministic Tool Layer
+- `src/tools/financial_calculator.py`: formula-based computation engine
+- Produces cap rate, cash flow, CoC, DSCR, break-even occupancy, projection metrics, and sensitivity outputs
+
+6. Safety Layer
+- `src/crews/guardrails/safety_guardrails.py`
+- Guardrails validate/reject unsafe claims and enforce risk/professional-consultation language
+
+7. Test Layer
+- `src/tests/` validates calculator accuracy, guardrails, and crew wiring
+
+### Runtime Paths
+
+- Fast deterministic path:
+  - Triggered when `FAST_MODE_ENABLED=true` and `PERFORMANCE_TARGET_SECONDS<=5`
+  - Uses calculator + rule-based recommendation from `src/main.py`
+  - Designed for strict low-latency use
+
+- Full multi-agent path:
+  - CrewAI sequential execution with context passing across tasks
+  - Better narrative depth, higher latency
+
+## Download and Setup
+
+1. Clone repository:
 ```bash
-pip install uv
+git clone <your-repo-url>
+cd Real-Estate-Advisor
 ```
 
-Next, navigate to your project directory and install the dependencies:
-
-(Optional) Lock the dependencies and install them by using the CLI command:
+2. Create virtual environment and install dependencies:
 ```bash
-crewai install
-```
-### Customizing
-
-**Add your `OPENAI_API_KEY` into the `.env` file**
-
-- Modify `src/real_estate_advisor/config/agents.yaml` to define your agents
-- Modify `src/real_estate_advisor/config/tasks.yaml` to define your tasks
-- Modify `src/real_estate_advisor/crew.py` to add your own logic, tools and specific args
-- Modify `src/real_estate_advisor/main.py` to add custom inputs for your agents and tasks
-
-## Running the Project
-
-To kickstart your crew of AI agents and begin task execution, run this from the root folder of your project:
-
-```bash
-$ crewai run
+python3 -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
 ```
 
-This command initializes the REAL-ESTATE-ADVISOR Crew, assembling the agents and assigning them tasks as defined in your configuration.
+3. Configure environment variables in `.env` (minimum):
+```env
+OPENAI_API_KEY=your_openai_key
+OPENAI_MODEL_NAME=gpt-4o-mini
+PERFORMANCE_TARGET_SECONDS=60
+FAST_MODE_ENABLED=true
+```
 
-This example, unmodified, will run the create a `report.md` file with the output of a research on LLMs in the root folder.
+Optional runtime flags:
+```env
+CREW_MEMORY_ENABLED=false
+CREW_WEB_TOOLS_ENABLED=false
+CREW_SCRAPE_TOOL_ENABLED=false
+CREW_AGENT_MAX_ITER=8
+OPENAI_MAX_OUTPUT_TOKENS=900
+```
 
-## Understanding Your Crew
+## Run in CLI
 
-The REAL-ESTATE-ADVISOR Crew is composed of multiple AI agents, each with unique roles, goals, and tools. These agents collaborate on a series of tasks, defined in `config/tasks.yaml`, leveraging their collective skills to achieve complex objectives. The `config/agents.yaml` file outlines the capabilities and configurations of each agent in your crew.
+```bash
+source venv/bin/activate
+python -m src.main
+```
 
-## Support
+Notes:
+- If `PERFORMANCE_TARGET_SECONDS<=5` and `FAST_MODE_ENABLED=true`, the app uses deterministic fast mode.
+- Otherwise, it uses full CrewAI multi-agent execution.
 
-For support, questions, or feedback regarding the RealEstateAdvisor Crew or crewAI.
-- Visit our [documentation](https://docs.crewai.com)
-- Reach out to us through our [GitHub repository](https://github.com/joaomdmoura/crewai)
-- [Join our Discord](https://discord.com/invite/X4JWnZnxPb)
-- [Chat with our docs](https://chatg.pt/DWjSBZn)
+## Run in Streamlit
 
-Let's create wonders together with the power and simplicity of crewAI.
+```bash
+source venv/bin/activate
+./venv/bin/streamlit run src/ui/streamlit.py
+```
+
+Open the local URL shown by Streamlit (usually `http://localhost:8501`).
+
+## Try All Cases (Manual Testing)
+
+Use the following complete input sets in Streamlit. Select the listed strategy in the sidebar for each run.
+
+### Case 1: PASS (Passive Income)
+
+- `property_address`: `456 Maple Street, Austin, TX 78701`
+- `purchase_price`: `475000`
+- `square_footage`: `1950`
+- `bedrooms`: `3`
+- `bathrooms`: `2.0`
+- `property_type`: `Single Family Home`
+- `year_built`: `2015`
+- `estimated_monthly_rent`: `3400`
+- `annual_operating_expenses`: `14000`
+- `down_payment_percent`: `25`
+- `interest_rate`: `7.25`
+- `loan_term_years`: `30`
+- Strategy: `Passive Income`
+
+### Case 2: BUY (Aggressive Growth)
+
+- `property_address`: `2201 East Ridge Dr, Austin, TX 78723`
+- `purchase_price`: `300000`
+- `square_footage`: `1650`
+- `bedrooms`: `3`
+- `bathrooms`: `2.0`
+- `property_type`: `Single Family Home`
+- `year_built`: `2012`
+- `estimated_monthly_rent`: `3600`
+- `annual_operating_expenses`: `9000`
+- `down_payment_percent`: `30`
+- `interest_rate`: `6.5`
+- `loan_term_years`: `30`
+- Strategy: `Aggressive Growth`
+
+### Case 3: HOLD FOR NEGOTIATION (Fix & Flip)
+
+- `property_address`: `118 Cedar Park Ln, Austin, TX 78741`
+- `purchase_price`: `500000`
+- `square_footage`: `2100`
+- `bedrooms`: `4`
+- `bathrooms`: `2.5`
+- `property_type`: `Single Family Home`
+- `year_built`: `2008`
+- `estimated_monthly_rent`: `3400`
+- `annual_operating_expenses`: `14000`
+- `down_payment_percent`: `50`
+- `interest_rate`: `6.5`
+- `loan_term_years`: `30`
+- Strategy: `Fix & Flip`
+
+### Recommended Test Matrix
+
+1. Run each case with its matching strategy above.
+2. Re-run each case with a different strategy to observe alignment/recommendation changes.
+3. Compare fast mode vs full crew mode:
+   - Fast mode: `PERFORMANCE_TARGET_SECONDS=5`, `FAST_MODE_ENABLED=true`
+   - Full mode: `PERFORMANCE_TARGET_SECONDS=60`, `FAST_MODE_ENABLED=false`
+
+## Testing
+
+Run all tests:
+```bash
+./venv/bin/python -m pytest -q
+```
+
+Targeted examples:
+```bash
+./venv/bin/python -m pytest -q src/tests/test_financial_calculator.py
+./venv/bin/python -m pytest -q src/tests/test_guardrails.py
+./venv/bin/python -m pytest -q src/tests/test_crew.py
+```
+
+### Test Scope Explained
+
+- `src/tests/test_financial_calculator.py`
+  - Verifies deterministic finance formulas and validation behavior.
+  - Use when changing `src/tools/financial_calculator.py`.
+
+- `src/tests/test_guardrails.py`
+  - Verifies guardrail pass/fail contract and policy checks.
+  - Use when changing `src/crews/guardrails/safety_guardrails.py`.
+
+- `src/tests/test_crew.py`
+  - Verifies crew wiring (agents/tasks initialization) and integration path.
+  - Use when changing `src/crews/crew.py` or task/agent config.
+
+### Useful Test Commands
+
+Run with verbose output:
+```bash
+./venv/bin/python -m pytest -v
+```
+
+Run a single test function:
+```bash
+./venv/bin/python -m pytest -q src/tests/test_financial_calculator.py::TestFinancialCalculator::test_cap_rate_calculation
+```
+
+Run only tests matching a keyword:
+```bash
+./venv/bin/python -m pytest -q -k \"guardrail\"
+```
+
+Run marker-filtered tests (if you use markers):
+```bash
+./venv/bin/python -m pytest -q -m \"not slow\"
+```
+
+## Pros and Cons
+
+### Pros
+
+- Deterministic financial core (`FinancialCalculatorTool`) for reproducible metrics.
+- Multi-agent design separates responsibilities (data, finance, risk, strategy, synthesis).
+- Guardrails enforce safer, compliance-oriented language.
+- Fast mode provides practical SLA path for strict latency requirements.
+- Streamlit interface makes manual testing and demos straightforward.
+
+### Cons
+
+- Full multi-agent sequential flow is naturally slower than single-model deterministic pipelines.
+- Output quality can vary in full LLM mode due to prompt/runtime variability.
+- Prompt/task templates are large and can increase token usage and latency.
+- External research tool reliability depends on network/API availability.
+- Several modules still include template/placeholder remnants and can be further cleaned.
