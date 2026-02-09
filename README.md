@@ -5,8 +5,9 @@ AI-powered real estate investment analysis system built with CrewAI. It combines
 ## What This Project Does
 
 - Analyzes a property using financial metrics (cap rate, cash flow, cash-on-cash, DSCR, break-even occupancy, 5-year projection).
-- Runs a multi-agent workflow (data integration, financial modeling, risk analysis, strategy alignment, final recommendation).
-- Applies guardrails to block unsafe or non-compliant advisory language.
+- Runs a multi-agent workflow (data integration, financial modeling, strategy+risk alignment, final recommendation).
+- Applies safety guardrails on the final recommendation task.
+- Supports active web search via `SerperDevTool` (when `SERPER_API_KEY` is configured) to generate external citations.
 - Supports a fast deterministic mode for strict low-latency responses (<= 5s target).
 
 ## Repository Structure
@@ -16,7 +17,6 @@ AI-powered real estate investment analysis system built with CrewAI. It combines
 - `src/tools/`: custom deterministic tools (financial calculator).
 - `src/ui/`: Streamlit UI and orchestrator layer.
 - `src/tests/`: test suite.
-- `src/knowledge/`: local knowledge artifacts.
 
 ## Architecture Overview
 
@@ -34,9 +34,9 @@ The system uses a layered architecture with deterministic finance logic plus opt
 
 3. Crew Layer
 - `src/crews/crew.py` wires:
-  - 5 agents (data, financial, risk, strategy, advisor)
-  - 5 sequential tasks
-  - per-task guardrails
+  - 4 agents (data, financial, strategy+risk, advisor)
+  - 4 sequential tasks
+  - guardrails on the final advisory task only
   - runtime controls (memory/tools/max iterations/token caps)
 
 4. Prompt/Config Layer
@@ -86,16 +86,25 @@ OPENAI_API_KEY=your_openai_key
 OPENAI_MODEL_NAME=gpt-4o-mini
 PERFORMANCE_TARGET_SECONDS=60
 FAST_MODE_ENABLED=true
+SERPER_API_KEY=your_serper_key
 ```
 
 Optional runtime flags:
 ```env
 CREW_MEMORY_ENABLED=false
-CREW_WEB_TOOLS_ENABLED=false
+CREW_WEB_TOOLS_ENABLED=true
 CREW_SCRAPE_TOOL_ENABLED=false
-CREW_AGENT_MAX_ITER=8
-OPENAI_MAX_OUTPUT_TOKENS=900
+CREW_AGENT_MAX_ITER=4
+OPENAI_MAX_OUTPUT_TOKENS=600
+CREW_REQUIRE_EXTERNAL_SOURCES=true
+CREW_MIN_EXTERNAL_SOURCE_URLS=1
+FINAL_GUARDRAIL_MAX_RETRIES=5
 ```
+
+Notes:
+- `SERPER_API_KEY` enables active web search for research agents and the final advisor.
+- `CREW_SCRAPE_TOOL_ENABLED=true` is optional; it adds page scraping in addition to search.
+- If source enforcement is enabled, final output must include at least `CREW_MIN_EXTERNAL_SOURCE_URLS` URLs in `## Sources`.
 
 ## Run in CLI
 
@@ -233,7 +242,8 @@ Run marker-filtered tests (if you use markers):
 
 - Deterministic financial core (`FinancialCalculatorTool`) for reproducible metrics.
 - Multi-agent design separates responsibilities (data, finance, risk, strategy, synthesis).
-- Guardrails enforce safer, compliance-oriented language.
+- Final-task guardrails enforce safer, compliance-oriented language.
+- Active web search support enables external source citation in reports.
 - Fast mode provides practical SLA path for strict latency requirements.
 - Streamlit interface makes manual testing and demos straightforward.
 
